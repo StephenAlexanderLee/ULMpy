@@ -5,6 +5,8 @@ __pycache__/
 
 # User
 *.pickle
+data/
+
 # C extensions
 *.so
 

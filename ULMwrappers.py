@@ -6,6 +6,7 @@ import matplotlib.animation
 from natsort import natsorted
 import multiprocessing as mp
 import os
+import datetime
 
 # ULM modules
 import parameters
@@ -77,7 +78,8 @@ def ULMvelocity(ULMfile,trajs,params,tree,img,interp=1,reprocess=False):
 
 class fileTree:
     def __init__(self,load_dir,cld,cwd):
-        self.csd = os.path.join(cwd,'data',load_dir)
+        self.date = datetime.datetime.now().strftime("%y-%m-%d")
+        self.csd = os.path.join(cwd,'data',load_dir,self.date)
         self.csd_l = os.path.join(self.csd, 'localizations')
         self.csd_v = os.path.join(self.csd, 'velocity')
         self.csd_t = os.path.join(self.csd, 'trajectory')

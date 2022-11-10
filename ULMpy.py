@@ -19,9 +19,9 @@ from ULMwrappers import *
 P = parameters.Parameters()
 
 # --------------------------- main script ------------------------------------ #
-load_dir = '19 M13 pre-FUS monitoring'
+load_dir = '13 M02 pre-TUS ulm'
 
-cld = 'H:\\Research Data\\ULM\\To Stephen From Sua 3\\{0}\\ULM'.format(load_dir)
+cld = 'H:\\Research Data\\ULM\\To Stephen From Sua 2\\{0}\\ULM'.format(load_dir)
 cwd = os.getcwd()                   # set current directory
 tree = fileTree(load_dir,cld,cwd)   # generate file tree structure
 # load enveloped data
@@ -33,7 +33,7 @@ M = 161                             # TODO: put into parameters [image size]
 interp_factor = 4                   # interp*4 [already interpolated by 4] times current image grid
 reprocess = [True,True,True]        # [localization, trajectory, velocity]
 P.show_plots = False                # verbose plotting
-seperate_f = [[1,5],[5,15],[15,25]] # MB seperation frequency bins
+seperate_f = [[0,5],[2.5,10],[7.5,25]] # MB seperation frequency bins
 
 # perform ULM - localization, tracking, velocity estimation
 for f in tree.load_files:
@@ -80,9 +80,6 @@ cmap_args_r = dict(cmap=ncmap,
                     aspect='equal')
 plt.style.use('dark_background')
 
-cld = 'H:\\Research Data\\ULM\\To Stephen From Sua 3\\{0}\\ULM'.format(load_dir)
-cwd = os.getcwd()
-tree = fileTree(load_dir,cld,cwd)
 #load_limit = int(len(tree.load_files)/2)
 load_velocity = natsorted(glob.glob(tree.csd_v+'\*.pickle'))
 load_vec = [('lft' in x) for x in load_velocity]
