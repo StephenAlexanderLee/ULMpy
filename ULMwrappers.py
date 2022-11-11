@@ -77,8 +77,11 @@ def ULMvelocity(ULMfile,trajs,params,tree,img,interp=1,reprocess=False):
     return Velocity, Vmap
 
 class fileTree:
-    def __init__(self,load_dir,cld,cwd):
-        self.date = datetime.datetime.now().strftime("%y-%m-%d")
+    def __init__(self,load_dir,cld,cwd,date=[]):
+        if date is []:
+            self.date = datetime.datetime.now().strftime("%y-%m-%d")
+        else:
+            self.date = date
         self.csd = os.path.join(cwd,'data',load_dir,self.date)
         self.csd_l = os.path.join(self.csd, 'localizations')
         self.csd_v = os.path.join(self.csd, 'velocity')

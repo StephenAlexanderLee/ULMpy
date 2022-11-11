@@ -1,6 +1,8 @@
 ## pyULM: Ultrasound Localization Microscopy using python
 ## MB tracking is based on pystachio (https://github.com/ejh516/pystachio-smt)
+## [https://doi.org/10.1016/j.csbj.2021.07.004]
 ## trajectory linking: hungarian linker
+
 ## Written by: Stephen A. Lee 2022
 
 # ---------------------------- modules --------------------------------------- #
@@ -20,10 +22,10 @@ P = parameters.Parameters()
 
 # --------------------------- main script ------------------------------------ #
 load_dir = '13 M02 pre-TUS ulm'
-
+load_date = '22-11-10'
 cld = 'H:\\Research Data\\ULM\\To Stephen From Sua 2\\{0}\\ULM'.format(load_dir)
 cwd = os.getcwd()                   # set current directory
-tree = fileTree(load_dir,cld,cwd)   # generate file tree structure
+tree = fileTree(load_dir,cld,cwd,load_date)   # generate file tree structure
 # load enveloped data
 Nframes = 500                       # TODO: put into parameters [number of frames]
 #N = 281
@@ -31,7 +33,7 @@ Nframes = 500                       # TODO: put into parameters [number of frame
 N = 321                             # TODO: put into parameters [image size]
 M = 161                             # TODO: put into parameters [image size]
 interp_factor = 4                   # interp*4 [already interpolated by 4] times current image grid
-reprocess = [True,True,True]        # [localization, trajectory, velocity]
+reprocess = [False,False,True]        # [localization, trajectory, velocity]
 P.show_plots = False                # verbose plotting
 seperate_f = [[0,5],[2.5,10],[7.5,25]] # MB seperation frequency bins
 
@@ -40,6 +42,7 @@ for f in tree.load_files:
     #f = tree.load_files[0]
     # Bubble Seperation
     for W in seperate_f:
+        #W = seperate_f[0]
         ULMfile = '{0}to{1}_'.format(W[0],W[1]) + os.path.basename(f)
         print(ULMfile)
         data = MBseparate_freq(np.reshape(np.fromfile(f, dtype='<f'),(N,M,Nframes),order='F'),w=W)
@@ -51,17 +54,17 @@ for f in tree.load_files:
             vv,sV = ULMvelocity(ULMfile,trajs,P,tree,img,interp_factor,reprocess[2])
 # ---------------------------------------------------------------------------- #
 
-def Vsparse_to_array(Vel,mask):
+def Vsparse_to_array(Vel,M):
     if type(Vel) is scipy.sparse.csr.csr_matrix:
         Vel = Vel.toarray()
-        mask = mask.toarray()
+        mask = M.toarray()
         return (np.divide(Vel,mask,where=mask!=0)), mask
     else:
         null = np.zeros((100,100))
         return null, null
 
 
-dynrange = 7.5;#np.mean(velo[velo>0])
+dynrange = 10;#np.mean(velo[velo>0])
 cmap = copy.copy(plt.cm.get_cmap('bwr'))
 ncmap = cmap(np.arange(cmap.N))
 ncmap[:,-1] = np.linspace(-1,1,int(cmap.N))**2
@@ -78,32 +81,35 @@ cmap_args_r = dict(cmap=ncmap,
                     extent=[.85,2.85,2.5,6.5],
                     alpha = 0.8,
                     aspect='equal')
-plt.style.use('dark_background')
+plt.style.use('seaborn-white')
 
 #load_limit = int(len(tree.load_files)/2)
 load_velocity = natsorted(glob.glob(tree.csd_v+'\*.pickle'))
 load_vec = [('lft' in x) for x in load_velocity]
 V_l = V_r = 0
+n_l = n_r = 0
 M_l = M_r = 0
 for i,filename in enumerate(load_velocity):
     with open(filename, "rb") as f:
         vv , sV = pickle.load(f)
         if load_vec[i]:
             V_l += np.sum(sV,0)
+            n_l += 1
             #mask += len(sV)
             M_l += np.sum([((x)!=0).astype(int) for x in sV],0)
         else:
             V_r += np.sum(sV,0)
+            n_r += 1
             M_r += np.sum([((x)!=0).astype(int) for x in sV],0)
 
 velo_l, mask_l = Vsparse_to_array(V_l,M_l)
 velo_r, mask_r = Vsparse_to_array(V_r,M_r)
 #velo = V/mask
 fig, ax = plt.subplots(1,2,figsize=(17.5,8))
-ax[0].imshow(mask_l,cmap='gray',extent=[-.85,-2.85,2.5,6.5])
+ax[0].imshow(mask_l,cmap='gray_r',extent=[-.85,-2.85,2.5,6.5])
 ax[0].imshow(velo_l,**cmap_args_l)
 ax[0].set_xlabel('mm');ax[0].set_ylabel('mm');ax[0].set_title(load_dir + ' left')
-ax[1].imshow(mask_r,cmap='gray',extent=[.85,2.85,2.5,6.5])
+#ax[1].imshow(mask_r,cmap='gray_r',extent=[.85,2.85,2.5,6.5])
 im = ax[1].imshow(velo_r,**cmap_args_r)
 ax[1].set_xlabel('mm');ax[1].set_ylabel('mm');ax[1].set_title(load_dir + ' right')
 h = fig.colorbar(im)

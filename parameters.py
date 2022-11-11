@@ -61,7 +61,7 @@ default_parameters = {
     'wn_size' :
         {'description' : 'smoothing filter point size for track interp',
         'class' : 'velocity',
-        'default' : 10},
+        'default' : 15},
     'wl2mm' :
         {'description' : 'conversion from wavelengths to mm with interp factor',
         'class' : 'velocity',

@@ -25,7 +25,7 @@ class velocity:
         self.Vw = [None]*self.N;
         self.variation = 0;
 
-def interp_and_smooth(data, interp = 1, wn_size = 5):
+def interp_and_smooth(data, interp = 1, wn_size = 10):
     n = len(data)
     N = n*interp
     datap = np.arange(0,n)
@@ -91,7 +91,7 @@ def track2grid(data, index, frame_size,interp,params):
     #k2d = signal.gaussian(N,std=data[index].variation[0]).reshape(N,1)
     #kernel = np.outer(k1d,k2d)
     for X,Y,Z in zip(xcoords,ycoords,zvalues(xi)):
-        dd[Y,X]=Z
+        dd[Y,X]=Z*data[index].direction
         #dd[int(Y-(N/2)):int(Y+(N/2)),int(X-(N/2)):int(X+(N/2))] += kernel*Z
     #dd = dd/np.max(dd)*np.max(data[index].Vw)*data[index].direction
     return sparse.csr_matrix(dd)
@@ -121,5 +121,5 @@ def generate_Velocity(data, params, interp = 1, frame_size=None):
         for index, V in enumerate(velocities):
             velocities[index] = local_weighted_average(velocities, index, params);
             Vmap.append(track2grid(velocities, index, frame_size, interp, params));
-            print('')
+        print('')
     return velocities, Vmap
