@@ -48,6 +48,7 @@ def ULMlocalize(ULMfile,img,params,tree,reprocess = False):
             bg.set_data(img[:,:,i])
             sc.set_offsets(all_bubbles[i].positions)
         a = matplotlib.animation.FuncAnimation(fig, animate, interval = 100, frames = img.shape[2]-1)
+        a.save(os.path.join(tree.csd,'localization_example.mp4'))
         plt.show()
     print('\n')
     return all_bubbles

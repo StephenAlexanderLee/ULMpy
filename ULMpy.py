@@ -13,6 +13,7 @@ import matplotlib.animation
 import os
 import pickle
 import copy
+import scipy
 
 # --------------------------- custom modules --------------------------------- #
 import parameters
@@ -33,8 +34,8 @@ Nframes = 500                       # TODO: put into parameters [number of frame
 N = 321                             # TODO: put into parameters [image size]
 M = 161                             # TODO: put into parameters [image size]
 interp_factor = 4                   # interp*4 [already interpolated by 4] times current image grid
-reprocess = [False,False,True]        # [localization, trajectory, velocity]
-P.show_plots = False                # verbose plotting
+reprocess = [True,False,False]        # [localization, trajectory, velocity]
+P.show_plots = True                # verbose plotting
 seperate_f = [[0,5],[2.5,10],[7.5,25]] # MB seperation frequency bins
 
 # perform ULM - localization, tracking, velocity estimation
@@ -42,9 +43,10 @@ for f in tree.load_files:
     #f = tree.load_files[0]
     # Bubble Seperation
     for W in seperate_f:
-        #W = seperate_f[0]
+        #W = seperate_f[2]
         ULMfile = '{0}to{1}_'.format(W[0],W[1]) + os.path.basename(f)
         print(ULMfile)
+        #data = np.reshape(np.fromfile(f, dtype='<f'),(N,M,Nframes),order='F')
         data = MBseparate_freq(np.reshape(np.fromfile(f, dtype='<f'),(N,M,Nframes),order='F'),w=W)
         img = (((data - data.min()) / (data.max() - data.min())) * 255.9).astype(np.uint16)
         all_bubbles = ULMlocalize(ULMfile,img,P,tree,reprocess[0])
@@ -63,8 +65,26 @@ def Vsparse_to_array(Vel,M):
         null = np.zeros((100,100))
         return null, null
 
+load_velocity = natsorted(glob.glob(tree.csd_v+'\*.pickle'))
+load_vec = [('lft' in x) for x in load_velocity]
+V_l = V_r = 0
+M_l = M_r = 0
+for i,filename in enumerate(load_velocity):
+    with open(filename, "rb") as f:
+        vv , sV = pickle.load(f)
+        if load_vec[i]:
+            V_l += np.sum((sV),0)
+            #mask += len(sV)
+            M_l += np.sum([((x)!=0).astype(int) for x in sV],0)
+        else:
+            V_r += np.sum((sV),0)
+            M_r += np.sum([((x)!=0).astype(int) for x in sV],0)
 
-dynrange = 5;#np.mean(velo[velo>0])
+velo_l, mask_l = Vsparse_to_array(V_l,M_l)
+velo_r, mask_r = Vsparse_to_array(V_r,M_r)
+
+
+dynrange = 4;#np.mean(velo[velo>0])
 cmap = copy.copy(plt.cm.get_cmap('RdBu_r'))
 ncmap = cmap(np.arange(cmap.N))
 ncmap[:,-1] = np.abs(np.linspace(-1,1,int(cmap.N)))
@@ -73,40 +93,24 @@ cmap_args_l = dict(cmap=ncmap,
                     vmin=-dynrange,
                     vmax=dynrange,
                     extent=[-.85,-2.85,2.5,6.5],
-                    alpha = 0.8,
+                    alpha = 0.9,
                     aspect='equal')
 cmap_args_r = dict(cmap=ncmap,
                     vmin=-dynrange,
                     vmax=dynrange,
                     extent=[.85,2.85,2.5,6.5],
-                    alpha = 0.8,
+                    alpha = 0.9,
                     aspect='equal')
 plt.style.use('seaborn-white')
 
-load_velocity = natsorted(glob.glob(tree.csd_v+'\*.pickle'))[:20]
-load_vec = [('lft' in x) for x in load_velocity]
-V_l = V_r = 0
-M_l = M_r = 0
-for i,filename in enumerate(load_velocity):
-    with open(filename, "rb") as f:
-        vv , sV = pickle.load(f)
-        if load_vec[i]:
-            V_l += np.sum(sV,0)
-            #mask += len(sV)
-            M_l += np.sum([((x)!=0).astype(int) for x in sV],0)
-        else:
-            V_r += np.sum(sV,0)
-            M_r += np.sum([((x)!=0).astype(int) for x in sV],0)
 
-velo_l, mask_l = Vsparse_to_array(V_l,M_l)
-velo_r, mask_r = Vsparse_to_array(V_r,M_r)
 
 fig, ax = plt.subplots(1,2,figsize=(17.5,8))
-ax[0].imshow(mask_l,cmap='gray_r',extent=[-.85,-2.85,2.5,6.5])
-ax[0].imshow(velo_l,**cmap_args_l)
+ax[0].imshow(scipy.signal.medfilt(mask_l,3),cmap='gray_r',extent=[-.85,-2.85,2.5,6.5])
+ax[0].imshow(scipy.signal.medfilt(velo_l,3),**cmap_args_l)
 ax[0].set_xlabel('mm');ax[0].set_ylabel('mm');ax[0].set_title(load_dir + ' left')
-ax[1].imshow(mask_r,cmap='gray_r',extent=[.85,2.85,2.5,6.5])
-im = ax[1].imshow(velo_r,**cmap_args_r)
+ax[1].imshow(scipy.signal.medfilt(mask_r,3),cmap='gray_r',extent=[.85,2.85,2.5,6.5])
+im = ax[1].imshow(scipy.signal.medfilt(velo_r,3),**cmap_args_r)
 ax[1].set_xlabel('mm');ax[1].set_ylabel('mm');ax[1].set_title(load_dir + ' right')
 h = fig.colorbar(im)
 h.ax.set_ylabel('mm/s')

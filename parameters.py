@@ -7,12 +7,12 @@ default_parameters = {
     'psf_width' :
         {'description' : 'point spread function of bubble',
         'class' : 'image',
-        'default' : 5},
+        'default' : 7},
     # Tracking Parameters
     'disk_radius' :
         {'description' : 'Radius of the cv2 disc structural element',
          'class' : 'tracking',
-         'default' : 5},
+         'default' : 7},
     'N_merge' :
         {'description' : 'merge coincident bubble centroids',
          'class' : 'tracking',
@@ -52,7 +52,7 @@ default_parameters = {
      'snr_filter_cutoff' :
          {'description' : 'cutoff value when filtering spots based on SNR',
          'class' : 'tracking',
-         'default' : 1.0},
+         'default' : 1.5},
     # velocity parameters
     'frame_rate' :
         {'description' : 'ultrasound frame rate for calculating velocities',
